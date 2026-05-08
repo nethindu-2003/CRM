@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: crm-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      # Use a named volume to persist the SQLite database across container restarts.
+      # Because the database is copied into the image during the build, 
+      # the named volume will be initialized with the existing data on first run.
+      - crm_db_data:/app/config
+      - crm_uploads:/app/uploads
+    environment:
+      - NODE_ENV=production
+      - PORT=5001
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: crm-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  crm_db_data:
+  crm_uploads:
