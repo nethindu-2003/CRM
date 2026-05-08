@@ -263,7 +263,7 @@ const Leads = () => {
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Phone</label>
-                  <input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                  <input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} pattern="\d{10}" title="Phone number must be exactly 10 digits" />
                 </div>
               </div>
               
@@ -298,7 +298,7 @@ const Leads = () => {
                 </div>
                 <div className="form-group" style={{ flex: 1 }}>
                   <label className="form-label">Deal Value (LKR)</label>
-                  <input type="number" className="form-control" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} />
+                  <input type="number" min="0" className="form-control" value={formData.value} onChange={e => setFormData({...formData, value: e.target.value})} />
                 </div>
               </div>
               

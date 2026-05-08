@@ -153,7 +153,7 @@ const LeadDetails = ({ user }) => {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <Phone size={18} color="var(--text-secondary)" />
               {isEditing ? 
-                <input className="form-control" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} /> 
+                <input className="form-control" value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} pattern="\d{10}" title="Phone number must be exactly 10 digits" /> 
                 : <span>{lead.phone || 'N/A'}</span>}
             </div>
 
@@ -167,7 +167,7 @@ const LeadDetails = ({ user }) => {
             <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
               <DollarSign size={18} color="var(--text-secondary)" />
               {isEditing ? 
-                <input type="number" className="form-control" value={editForm.value} onChange={e => setEditForm({...editForm, value: e.target.value})} /> 
+                <input type="number" min="0" className="form-control" value={editForm.value} onChange={e => setEditForm({...editForm, value: e.target.value})} /> 
                 : <span>LKR {lead.value?.toLocaleString() || 0}</span>}
             </div>
 

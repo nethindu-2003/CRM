@@ -21,7 +21,8 @@ const upload = multer({ dest: 'uploads/' });
 const leadValidationRules = [
   body('name').notEmpty().withMessage('Lead name is required'),
   body('email').optional({ checkFalsy: true }).isEmail().withMessage('Must be a valid email'),
-  body('value').optional({ checkFalsy: true }).isNumeric().withMessage('Deal value must be a number'),
+  body('phone').optional({ checkFalsy: true }).matches(/^\d{10}$/).withMessage('Phone number must be exactly 10 digits'),
+  body('value').optional({ checkFalsy: true }).isFloat({ min: 0 }).withMessage('Deal value must be a positive number'),
   body('status').optional().isIn(['New', 'Contacted', 'Qualified', 'Proposal Sent', 'Won', 'Lost']).withMessage('Invalid status'),
 ];
 
