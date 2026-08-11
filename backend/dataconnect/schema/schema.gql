@@ -1,0 +1,20 @@
+type Lead @table {
+  name: String!
+  company: String
+  email: String
+  phone: String
+  source: String
+  salesperson: String
+  status: String!
+  value: Float!
+  createdAt: Date!
+  updatedAt: Date!
+}
+
+type Note @table {
+  lead: Lead! @ref
+  content: String!
+  createdBy: String!
+  createdByName: String!
+  createdAt: Date!
+}

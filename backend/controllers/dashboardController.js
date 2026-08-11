@@ -1,38 +1,40 @@
-const db = require('../config/database');
+const { listLeads } = require('../src/dataconnect-admin-generated');
 
-const getDashboardMetrics = (req, res) => {
-  const metrics = {};
-  
-  db.serialize(() => {
-    db.get(`SELECT COUNT(*) as totalLeads FROM leads`, [], (err, row) => {
-      metrics.totalLeads = row.totalLeads;
-      
-      db.get(`SELECT COUNT(*) as newLeads FROM leads WHERE status = 'New'`, [], (err, row) => {
-        metrics.newLeads = row.newLeads;
-        
-        db.get(`SELECT COUNT(*) as qualifiedLeads FROM leads WHERE status = 'Qualified'`, [], (err, row) => {
-          metrics.qualifiedLeads = row.qualifiedLeads;
-          
-          db.get(`SELECT COUNT(*) as wonLeads FROM leads WHERE status = 'Won'`, [], (err, row) => {
-            metrics.wonLeads = row.wonLeads;
-            
-            db.get(`SELECT COUNT(*) as lostLeads FROM leads WHERE status = 'Lost'`, [], (err, row) => {
-              metrics.lostLeads = row.lostLeads;
-              
-              db.get(`SELECT SUM(value) as totalValue FROM leads`, [], (err, row) => {
-                metrics.totalValue = row.totalValue || 0;
-                
-                db.get(`SELECT SUM(value) as wonValue FROM leads WHERE status = 'Won'`, [], (err, row) => {
-                  metrics.wonValue = row.wonValue || 0;
-                  res.json(metrics);
-                });
-              });
-            });
-          });
-        });
-      });
+const getDashboardMetrics = async (req, res) => {
+  try {
+    const response = await listLeads();
+    const leadsSnapshot = response.data.leads;
+    
+    const metrics = {
+      totalLeads: 0,
+      newLeads: 0,
+      qualifiedLeads: 0,
+      wonLeads: 0,
+      lostLeads: 0,
+      totalValue: 0,
+      wonValue: 0
+    };
+
+    leadsSnapshot.forEach((data) => {
+      const status = data.status;
+      const value = data.value || 0;
+
+      metrics.totalLeads += 1;
+      metrics.totalValue += value;
+
+      if (status === 'New') metrics.newLeads += 1;
+      if (status === 'Qualified') metrics.qualifiedLeads += 1;
+      if (status === 'Won') {
+        metrics.wonLeads += 1;
+        metrics.wonValue += value;
+      }
+      if (status === 'Lost') metrics.lostLeads += 1;
     });
-  });
+
+    res.json(metrics);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 module.exports = { getDashboardMetrics };

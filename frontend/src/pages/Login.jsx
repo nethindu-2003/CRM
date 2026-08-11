@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { authAPI } from '../services/api';
+import { auth } from '../firebase';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { LogIn } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = ({ onLogin }) => {
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('password123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -14,15 +17,16 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     
     try {
-      const response = await authAPI.login({ email, password });
-      onLogin(response.data.token, response.data.user);
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const token = await userCredential.user.getIdToken();
+      onLogin(token, {
+        id: userCredential.user.uid,
+        email: userCredential.user.email,
+        name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
+      });
+      navigate('/');
     } catch (err) {
-      if (err.response?.data?.details) {
-        const errorMsgs = err.response.data.details.map(d => Object.values(d)[0]).join(', ');
-        setError(errorMsgs);
-      } else {
-        setError(err.response?.data?.error || 'Failed to login');
-      }
+      setError(err.message || 'Failed to login');
     } finally {
       setLoading(false);
     }
@@ -42,8 +46,9 @@ const Login = ({ onLogin }) => {
         
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label className="form-label">Email Address</label>
+            <label htmlFor="email" className="form-label">Email Address</label>
             <input 
+              id="email"
               type="email" 
               className="form-control" 
               value={email} 
@@ -52,8 +57,9 @@ const Login = ({ onLogin }) => {
             />
           </div>
           <div className="form-group">
-            <label className="form-label">Password</label>
+            <label htmlFor="password" className="form-label">Password</label>
             <input 
+              id="password"
               type="password" 
               className="form-control" 
               value={password} 
@@ -65,6 +71,11 @@ const Login = ({ onLogin }) => {
             {loading ? 'Signing in...' : <><LogIn size={18} /> Sign In</>}
           </button>
         </form>
+        <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+          <Link to="/register" style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>
+            Don't have an account? Register
+          </Link>
+        </div>
       </div>
     </div>
   );

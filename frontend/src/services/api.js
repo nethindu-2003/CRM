@@ -13,9 +13,7 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export const authAPI = {
-  login: (credentials) => api.post('/auth/login', credentials),
-};
+// authAPI removed since login is handled by Firebase on frontend
 
 export const dashboardAPI = {
   getMetrics: () => api.get('/dashboard'),
@@ -27,7 +25,7 @@ export const leadsAPI = {
   createLead: (data) => api.post('/leads', data),
   updateLead: (id, data) => api.put(`/leads/${id}`, data),
   deleteLead: (id) => api.delete(`/leads/${id}`),
-  updateStatus: (id, status) => api.put(`/leads/${id}`, { status }),
+  updateStatus: (id, status) => api.patch(`/leads/${id}/status`, { status }),
   
   // Notes
   getNotes: (leadId) => api.get(`/leads/${leadId}/notes`),

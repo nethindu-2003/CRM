@@ -1,0 +1,41 @@
+query ListLeads @auth(level: USER) {
+  leads(orderBy: [{updatedAt: DESC}]) {
+    id
+    name
+    company
+    email
+    phone
+    source
+    salesperson
+    status
+    value
+    createdAt
+    updatedAt
+  }
+}
+
+query GetLeadById($id: UUID!) @auth(level: USER) {
+  lead(id: $id) {
+    id
+    name
+    company
+    email
+    phone
+    source
+    salesperson
+    status
+    value
+    createdAt
+    updatedAt
+  }
+}
+
+query GetNotesByLead($leadId: UUID!) @auth(level: USER) {
+  notes(where: { leadId: { eq: $leadId } }, orderBy: [{createdAt: DESC}]) {
+    id
+    content
+    createdBy
+    createdByName
+    createdAt
+  }
+}

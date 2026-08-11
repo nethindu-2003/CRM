@@ -1,0 +1,42 @@
+mutation CreateLead($name: String!, $company: String, $email: String, $phone: String, $source: String, $salesperson: String, $status: String!, $value: Float!, $createdAt: Date!, $updatedAt: Date!) @auth(level: USER) {
+  lead_insert(data: {
+    name: $name,
+    company: $company,
+    email: $email,
+    phone: $phone,
+    source: $source,
+    salesperson: $salesperson,
+    status: $status,
+    value: $value,
+    createdAt: $createdAt,
+    updatedAt: $updatedAt
+  })
+}
+
+mutation UpdateLead($id: UUID!, $name: String!, $company: String, $email: String, $phone: String, $source: String, $salesperson: String, $status: String!, $value: Float!, $updatedAt: Date!) @auth(level: USER) {
+  lead_update(id: $id, data: {
+    name: $name,
+    company: $company,
+    email: $email,
+    phone: $phone,
+    source: $source,
+    salesperson: $salesperson,
+    status: $status,
+    value: $value,
+    updatedAt: $updatedAt
+  })
+}
+
+mutation DeleteLead($id: UUID!) @auth(level: USER) {
+  lead_delete(id: $id)
+}
+
+mutation CreateNote($leadId: UUID!, $content: String!, $createdBy: String!, $createdByName: String!, $createdAt: Date!) @auth(level: USER) {
+  note_insert(data: {
+    leadId: $leadId,
+    content: $content,
+    createdBy: $createdBy,
+    createdByName: $createdByName,
+    createdAt: $createdAt
+  })
+}

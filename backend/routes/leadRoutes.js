@@ -39,6 +39,7 @@ router.get('/', authenticateToken, getLeads);
 router.post('/', authenticateToken, leadValidationRules, validate, createLead);
 router.get('/:id', authenticateToken, getLeadById);
 router.put('/:id', authenticateToken, leadValidationRules, validate, updateLead);
+router.patch('/:id/status', authenticateToken, updateLeadStatus);
 router.delete('/:id', authenticateToken, deleteLead);
 
 // Notes
