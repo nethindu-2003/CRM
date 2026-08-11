@@ -22,6 +22,9 @@ jobs:
       run: npm ci
       working-directory: ./backend
       
+    - name: Create Firebase Service Account Key
+      run: echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > backend/config/serviceAccountKey.json
+      
     - name: Start Backend Server
       run: npm start &
       working-directory: ./backend
