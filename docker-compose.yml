@@ -7,10 +7,8 @@ services:
     ports:
       - "5001:5001"
     volumes:
-      # Use a named volume to persist the SQLite database across container restarts.
-      # Because the database is copied into the image during the build, 
-      # the named volume will be initialized with the existing data on first run.
-      - crm_db_data:/app/config
+      # Removed crm_db_data volume to prevent overwriting the config directory 
+      # which contains the Firebase serviceAccountKey.json required for Firebase Data Connect.
       - crm_uploads:/app/uploads
     environment:
       - NODE_ENV=production
@@ -29,5 +27,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  crm_db_data:
   crm_uploads:

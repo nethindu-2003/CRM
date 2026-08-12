@@ -1,5 +1,5 @@
 # Use an official Node.js runtime as a parent image
-FROM node:18-alpine
+FROM node:22-alpine
 
 # Set the working directory in the container
 WORKDIR /app
@@ -7,10 +7,10 @@ WORKDIR /app
 # Copy package.json and package-lock.json
 COPY package*.json ./
 
-# Install dependencies
+# Install dependencies (including firebase-admin and data connect SDK)
 RUN npm install --production
 
-# Copy the rest of the backend code
+# Copy the rest of the backend code including src/dataconnect-admin-generated and config/serviceAccountKey.json
 COPY . .
 
 # Expose the port the app runs on
