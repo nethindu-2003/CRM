@@ -11,6 +11,7 @@ COPY . .
 
 # Add build arguments for Firebase config if needed in CI/CD environments
 # These are optional since Firebase config might be hardcoded or in a .env file
+ARG VITE_API_URL
 ARG VITE_FIREBASE_API_KEY
 ARG VITE_FIREBASE_AUTH_DOMAIN
 ARG VITE_FIREBASE_PROJECT_ID
