@@ -1,9 +1,8 @@
-const { listLeads } = require('../src/dataconnect-admin-generated');
+const { Lead } = require('../models');
 
 const getDashboardMetrics = async (req, res) => {
   try {
-    const response = await listLeads();
-    const leadsSnapshot = response.data.leads;
+    const leads = await Lead.findAll();
     
     const metrics = {
       totalLeads: 0,
@@ -15,7 +14,7 @@ const getDashboardMetrics = async (req, res) => {
       wonValue: 0
     };
 
-    leadsSnapshot.forEach((data) => {
+    leads.forEach((data) => {
       const status = data.status;
       const value = data.value || 0;
 

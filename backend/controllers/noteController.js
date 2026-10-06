@@ -1,10 +1,10 @@
-const { getNotesByLead: fetchNotesByLead, createNote: insertNote } = require('../src/dataconnect-admin-generated');
+const { Note } = require('../models');
 
 const getNotesByLead = async (req, res) => {
   try {
     const leadId = req.params.id;
-    const response = await fetchNotesByLead({ leadId });
-    res.json(response.data.notes);
+    const notes = await Note.findAll({ where: { leadId }, order: [['createdAt', 'DESC']] });
+    res.json(notes);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -15,16 +15,14 @@ const createNote = async (req, res) => {
     const { content } = req.body;
     const leadId = req.params.id;
     
-    const newNote = {
+    const newNote = await Note.create({
       leadId: leadId,
       content,
       createdBy: req.user.id,
-      createdByName: req.user.name,
-      createdAt: new Date().toISOString()
-    };
+      createdByName: req.user.name
+    });
     
-    const response = await insertNote(newNote);
-    res.json({ id: response.data.note_insert, ...newNote });
+    res.json(newNote);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { auth } from './firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -16,28 +14,14 @@ const App = () => {
   const [loadingAuth, setLoadingAuth] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        const idToken = await currentUser.getIdToken();
-        const userData = {
-          id: currentUser.uid,
-          email: currentUser.email,
-          name: currentUser.displayName || currentUser.email.split('@')[0]
-        };
-        setToken(idToken);
-        setUser(userData);
-        localStorage.setItem('token', idToken);
-        localStorage.setItem('user', JSON.stringify(userData));
-      } else {
-        setToken(null);
-        setUser(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-      }
-      setLoadingAuth(false);
-    });
-
-    return () => unsubscribe();
+    // Firebase auth removed; authentication check bypassed.
+    const mockToken = localStorage.getItem('token');
+    if (mockToken) {
+      setToken(mockToken);
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) setUser(JSON.parse(savedUser));
+    }
+    setLoadingAuth(false);
   }, []);
 
   const handleLogin = (newToken, userData) => {
@@ -47,7 +31,10 @@ const App = () => {
   };
 
   const handleLogout = async () => {
-    await auth.signOut();
+    setToken(null);
+    setUser(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   if (loadingAuth) {

@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { UserPlus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -17,13 +15,22 @@ const Register = ({ onLogin }) => {
     setLoading(true);
     
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-      onLogin(token, {
-        id: userCredential.user.uid,
-        email: userCredential.user.email,
-        name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
+      const response = await fetch('http://localhost:5001/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to register');
+      }
+
+      const { token, user } = data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      onLogin(token, user);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Failed to register');

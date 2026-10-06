@@ -1,33 +1,24 @@
-const { listLeads, getLeadById: getLead, createLead: insertLead, updateLead: modifyLead, deleteLead: removeLead } = require('../src/dataconnect-admin-generated');
+const { Lead } = require('../models');
+const { Op } = require('sequelize');
 
 const getLeads = async (req, res) => {
   try {
-    const response = await listLeads();
-    let leads = response.data.leads;
-    
-    // Memory filtering for search/status (as Data Connect GraphQL doesn't easily support dynamic where without defining multiple queries)
-    if (req.query.status) {
-      leads = leads.filter(l => l.status === req.query.status);
-    }
-    if (req.query.source) {
-      leads = leads.filter(l => l.source === req.query.source);
-    }
-    if (req.query.salesperson) {
-      leads = leads.filter(l => l.salesperson === req.query.salesperson);
-    }
+    const where = {};
+    if (req.query.status) where.status = req.query.status;
+    if (req.query.source) where.source = req.query.source;
+    if (req.query.salesperson) where.salesperson = req.query.salesperson;
     if (req.query.search) {
-      const searchLower = req.query.search.toLowerCase();
-      leads = leads.filter(lead => 
-        (lead.name && lead.name.toLowerCase().includes(searchLower)) ||
-        (lead.company && lead.company.toLowerCase().includes(searchLower)) ||
-        (lead.email && lead.email.toLowerCase().includes(searchLower))
-      );
+      const search = req.query.search;
+      where[Op.or] = [
+        { name: { [Op.iLike]: `%${search}%` } },
+        { company: { [Op.iLike]: `%${search}%` } },
+        { email: { [Op.iLike]: `%${search}%` } }
+      ];
     }
     
-    // Map camelCase back to snake_case for frontend compatibility if needed, but standard practice is returning as-is
+    const leads = await Lead.findAll({ where, order: [['createdAt', 'DESC']] });
     res.json(leads);
   } catch (error) {
-    console.error("GET LEADS ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -35,38 +26,27 @@ const getLeads = async (req, res) => {
 const createLead = async (req, res) => {
   try {
     const { name, company, email, phone, source, salesperson, status, value } = req.body;
-    
-    const newLead = {
-      name: name || 'Unknown', 
-      company: company || '', 
-      email: email || '', 
-      phone: phone || '', 
-      source: source || 'Website', 
-      salesperson: salesperson || '', 
-      status: status || 'New', 
-      value: Number(value) || 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    // Remove any undefined properties explicitly just in case
-    Object.keys(newLead).forEach(key => newLead[key] === undefined && delete newLead[key]);
-    
-    const response = await insertLead(newLead);
-    res.json({ id: response.data.lead_insert.id, ...newLead });
+    const newLead = await Lead.create({
+      name: name || 'Unknown',
+      company: company || '',
+      email: email || '',
+      phone: phone || '',
+      source: source || 'Website',
+      salesperson: salesperson || '',
+      status: status || 'New',
+      value: Number(value) || 0
+    });
+    res.json(newLead);
   } catch (error) {
-    console.error("CREATE LEAD ERROR:", error);
     res.status(500).json({ error: error.message });
   }
 };
 
 const getLeadById = async (req, res) => {
   try {
-    const response = await getLead({ id: req.params.id });
-    if (!response.data.lead) {
-      return res.status(404).json({ error: 'Lead not found' });
-    }
-    res.json(response.data.lead);
+    const lead = await Lead.findByPk(req.params.id);
+    if (!lead) return res.status(404).json({ error: 'Lead not found' });
+    res.json(lead);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -75,14 +55,15 @@ const getLeadById = async (req, res) => {
 const updateLead = async (req, res) => {
   try {
     const { name, company, email, phone, source, salesperson, status, value } = req.body;
+    const [updated] = await Lead.update({
+      name, company, email, phone, source, salesperson, status, value
+    }, { where: { id: req.params.id } });
     
-    await modifyLead({
-      id: req.params.id,
-      name, company, email, phone, source, salesperson, status, value,
-      updatedAt: new Date().toISOString()
-    });
-    
-    res.json({ message: 'Lead updated successfully' });
+    if (updated) {
+      res.json({ message: 'Lead updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Lead not found' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -90,8 +71,12 @@ const updateLead = async (req, res) => {
 
 const deleteLead = async (req, res) => {
   try {
-    await removeLead({ id: req.params.id });
-    res.json({ message: 'Lead deleted successfully' });
+    const deleted = await Lead.destroy({ where: { id: req.params.id } });
+    if (deleted) {
+      res.json({ message: 'Lead deleted successfully' });
+    } else {
+      res.status(404).json({ error: 'Lead not found' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -100,20 +85,12 @@ const deleteLead = async (req, res) => {
 const updateLeadStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    
-    const currentLead = await getLead({ id: req.params.id });
-    if (!currentLead.data.lead) return res.status(404).json({ error: 'Lead not found' });
-    
-    // Omit fields that are not part of UpdateLeadVariables (e.g. createdAt, __typename)
-    const { createdAt, __typename, ...leadUpdateData } = currentLead.data.lead;
-    
-    await modifyLead({
-      ...leadUpdateData,
-      status, 
-      updatedAt: new Date().toISOString() 
-    });
-    
-    res.json({ message: 'Lead status updated successfully' });
+    const [updated] = await Lead.update({ status }, { where: { id: req.params.id } });
+    if (updated) {
+      res.json({ message: 'Lead status updated successfully' });
+    } else {
+      res.status(404).json({ error: 'Lead not found' });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -121,9 +98,7 @@ const updateLeadStatus = async (req, res) => {
 
 const exportLeadsCSV = async (req, res) => {
   try {
-    const response = await listLeads();
-    const leads = response.data.leads;
-    
+    const leads = await Lead.findAll({ raw: true });
     const { Parser } = require('json2csv');
     const parser = new Parser();
     const csvData = parser.parse(leads);
@@ -156,7 +131,7 @@ const importLeadsCSV = (req, res) => {
       
       try {
         for (const row of results) {
-          await insertLead({
+          await Lead.create({
             name: row.name || 'Unknown', 
             company: row.company || '', 
             email: row.email || '', 
@@ -164,18 +139,12 @@ const importLeadsCSV = (req, res) => {
             source: row.source || 'Website', 
             salesperson: row.salesperson || '', 
             status: row.status || 'New', 
-            value: parseFloat(row.value) || 0,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            value: parseFloat(row.value) || 0
           });
           successCount++;
         }
         
-        res.json({ 
-          message: 'Import completed', 
-          successCount,
-          errors 
-        });
+        res.json({ message: 'Import completed', successCount, errors });
       } catch (err) {
         res.status(500).json({ error: err.message });
       }

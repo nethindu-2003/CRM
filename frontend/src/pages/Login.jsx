@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { auth } from '../firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { LogIn } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -17,13 +15,22 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-      onLogin(token, {
-        id: userCredential.user.uid,
-        email: userCredential.user.email,
-        name: userCredential.user.displayName || userCredential.user.email.split('@')[0]
+      const response = await fetch('http://localhost:5001/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
       });
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to login');
+      }
+
+      const { token, user } = data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      onLogin(token, user);
       navigate('/');
     } catch (err) {
       setError(err.message || 'Failed to login');
